@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase 會員名單</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f4f4f4; margin: 5px 0; padding: 10px; border-radius: 5px; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Project1 會員名單 (TblMember)</h1>
+    <p>正在從 Supabase 資料庫載入會員姓名...</p>
+    
+    <ul id="member-list">
+        </ul>
+
+    <script>
+        // ----------------------------------------------------
+        // !! 請將這裡的 YOUR_SUPABASE_URL 和 YOUR_ANON_KEY 替換成您的真實金鑰 !!
+        // ----------------------------------------------------
+        const SUPABASE_URL = 'https://qfhiycrkhiivpindmddw.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmaGl5Y3JraGlpdnBpbmRtZGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0MzA1NzcsImV4cCI6MjA3ODAwNjU3N30.YHYOYKdKLV4KETAjO2lcamx1gvvPp6LaEBNRhUywCHU';
+        // ----------------------------------------------------
+
+        // 初始化 Supabase 客戶端
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const memberList = document.getElementById('member-list');
+
+        async function fetchMembers() {
+            try {
+                // 從 TblMember 資料表選擇 MemberName 欄位
+                const { data, error } = await supabase
+                    .from('TblMember')
+                    .select('MemberName'); 
+                
+                // 處理錯誤
+                if (error) {
+                    throw error;
+                }
+
+                // 清空載入訊息
+                memberList.innerHTML = '';
+                
+                // 渲染資料到網頁
+                if (data && data.length > 0) {
+                    data.forEach(member => {
+                        const listItem = document.createElement('li');
+                        // 確保欄位名稱與您的資料表欄位名稱完全一致
+                        listItem.textContent = member.MemberName; 
+                        memberList.appendChild(listItem);
+                    });
+                } else {
+                    memberList.innerHTML = '<li>目前資料庫中沒有會員資料。</li>';
+                }
+
+            } catch (error) {
+                console.error('讀取資料失敗:', error.message);
+                memberList.innerHTML = `<li class="error">讀取資料失敗：${error.message}</li>`;
+            }
+        }
+
+        // 載入網頁時執行
+        fetchMembers();
+
+    </script>
+</body>
+</html>
