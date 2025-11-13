@@ -44,10 +44,10 @@
 
   <script>
     // ✅ 將這兩個值換成你自己的 Supabase 資訊
-    const SUPABASE_URL = "https://YOUR_PROJECT_URL.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+    const SUPABASE_URL = "https://qfhiycrkhiivpindmddw.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr";
 
-    const supabase = window.supabase.createClient(https://qfhiycrkhiivpindmddw.supabase.co, sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadMembers() {
       const { data, error } = await supabase.from("TblMember").select("*");
