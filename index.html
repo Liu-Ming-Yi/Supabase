@@ -1,75 +1,74 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project1 - 會員清單</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8fafc;
-      margin: 40px;
-    }
-    h1 {
-      color: #333;
-    }
-    table {
-      border-collapse: collapse;
-      width: 50%;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    th {
-      background-color: #f1f5f9;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase 專題組員列表</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #34495e; }
+        ul { list-style: none; padding: 0; }
+        li { background-color: #ecf0f1; margin-bottom: 5px; padding: 10px; border-radius: 4px; }
+    </style>
 </head>
 <body>
-  <h1>會員清單（TblMember）</h1>
-  <table id="memberTable">
-    <thead>
-      <tr>
-        <th>MemberID</th>
-        <th>MemberName</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
-  <script>
-    // ✅ 將這兩個值換成你自己的 Supabase 資訊
-    const SUPABASE_URL = "https://qfhiycrkhiivpindmddw.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr";
+    <h1>TblMember 組員姓名列表</h1>
+    <p id="loading-status">載入中...</p>
+    <ul id="member-list">
+        </ul>
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <script>
+        // 🚨 替換成您在 Supabase 儀表板上取得的實際金鑰
+        const SUPABASE_URL = 'https://qfhiycrkhiivpindmddw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr';
+        
+        // 1. 初始化 Supabase 客戶端
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const memberList = document.getElementById('member-list');
+        const loadingStatus = document.getElementById('loading-status');
 
-    async function loadMembers() {
-      const { data, error } = await supabase.from("TblMember").select("*");
-      if (error) {
-        console.error("讀取失敗:", error);
-        return;
-      }
+        /**
+         * 函式：從 Supabase 讀取資料
+         */
+        async function fetchMembers() {
+            try {
+                // 2. 查詢 TblMember 資料表，只選擇 MemberName 欄位
+                const { data, error } = await supabase
+                    .from('TblMember')
+                    .select('MemberName');
 
-      const tbody = document.querySelector("#memberTable tbody");
-      tbody.innerHTML = ""; // 清空
+                if (error) {
+                    console.error('資料讀取錯誤:', error);
+                    loadingStatus.textContent = `載入失敗: ${error.message}`;
+                    return;
+                }
+                
+                // 3. 成功讀取資料
+                loadingStatus.textContent = `成功讀取 ${data.length} 位會員。`;
 
-      data.forEach(member => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${member.MemberID}</td>
-          <td>${member.MemberName}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
+                // 4. 顯示資料到網頁上
+                if (data.length > 0) {
+                    data.forEach(member => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = member.MemberName;
+                        memberList.appendChild(listItem);
+                    });
+                } else {
+                    memberList.innerHTML = '<li>資料表中沒有會員記錄。</li>';
+                }
 
-    loadMembers();
-  </script>
+            } catch (err) {
+                console.error('發生未知錯誤:', err);
+                loadingStatus.textContent = `發生未知錯誤: ${err.message}`;
+            }
+        }
+
+        // 啟動函式
+        fetchMembers();
+
+    </script>
 </body>
 </html>
