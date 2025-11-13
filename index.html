@@ -1,71 +1,72 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase 會員名單</title>
+    <title>Supabase 學生專題名單</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        ul { list-style-type: none; padding: 0; }
-        li { background: #f4f4f4; margin: 5px 0; padding: 10px; border-radius: 5px; }
-        .error { color: red; font-weight: bold; }
+        h1 { color: #34495e; }
+        ul { list-style: none; padding: 0; }
+        li { background-color: #ecf0f1; margin-bottom: 5px; padding: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <h1>Project1 會員名單 (TblMember)</h1>
-    <p>正在從 Supabase 資料庫載入會員姓名...</p>
-    
+    <h1>TblMember 會員姓名列表</h1>
+    <p id="loading-status">載入中...</p>
     <ul id="member-list">
         </ul>
 
     <script>
-        // ----------------------------------------------------
-        // !! 請將這裡的 YOUR_SUPABASE_URL 和 YOUR_ANON_KEY 替換成您的真實金鑰 !!
-        // ----------------------------------------------------
-        const SUPABASE_URL = 'https://qfhiycrkhiivpindmddw.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr'
-        // ----------------------------------------------------
-
-        // 初始化 Supabase 客戶端
+        // 🚨 替換成您在 Supabase 儀表板上取得的實際金鑰
+        const SUPABASE_URL = 'https://qfhiycrkhiivpindmddw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmaGl5Y3JraGlpdnBpbmRtZGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0MzA1NzcsImV4cCI6MjA3ODAwNjU3N30.YHYOYKdKLV4KETAjO2lcamx1gvvPp6LaEBNRhUywCHU';
+        
+        // 1. 初始化 Supabase 客戶端
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
         const memberList = document.getElementById('member-list');
+        const loadingStatus = document.getElementById('loading-status');
 
+        /**
+         * 函式：從 Supabase 讀取資料
+         */
         async function fetchMembers() {
             try {
-                // 從 TblMember 資料表選擇 MemberName 欄位
+                // 2. 查詢 TblMember 資料表，只選擇 MemberName 欄位
                 const { data, error } = await supabase
                     .from('TblMember')
-                    .select('MemberName'); 
-                
-                // 處理錯誤
-                if (error) {
-                    throw error;
-                }
+                    .select('MemberName');
 
-                // 清空載入訊息
-                memberList.innerHTML = '';
+                if (error) {
+                    console.error('資料讀取錯誤:', error);
+                    loadingStatus.textContent = `載入失敗: ${error.message}`;
+                    return;
+                }
                 
-                // 渲染資料到網頁
-                if (data && data.length > 0) {
+                // 3. 成功讀取資料
+                loadingStatus.textContent = `成功讀取 ${data.length} 位會員。`;
+
+                // 4. 顯示資料到網頁上
+                if (data.length > 0) {
                     data.forEach(member => {
                         const listItem = document.createElement('li');
-                        // 確保欄位名稱與您的資料表欄位名稱完全一致
-                        listItem.textContent = member.MemberName; 
+                        listItem.textContent = member.MemberName;
                         memberList.appendChild(listItem);
                     });
                 } else {
-                    memberList.innerHTML = '<li>目前資料庫中沒有會員資料。</li>';
+                    memberList.innerHTML = '<li>資料表中沒有會員記錄。</li>';
                 }
 
-            } catch (error) {
-                console.error('讀取資料失敗:', error.message);
-                memberList.innerHTML = `<li class="error">讀取資料失敗：${error.message}</li>`;
+            } catch (err) {
+                console.error('發生未知錯誤:', err);
+                loadingStatus.textContent = `發生未知錯誤: ${err.message}`;
             }
         }
 
-        // 載入網頁時執行
+        // 啟動函式
         fetchMembers();
 
     </script>
