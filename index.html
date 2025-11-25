@@ -8,41 +8,69 @@
     <style>
         body { font-family: "微軟正黑體", sans-serif; padding: 20px; background-color: #f4f4f9; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        ul { list-style: none; padding: 0; }
-        li { background: #fff; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; font-size: 18px; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { background: #fff; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; font-size: 18px; align-items: center; }
         li:last-child { border-bottom: none; }
-        .id-badge { background-color: #3ECF8E; color: white; padding: 2px 8px; border-radius: 5px; font-weight: bold; margin-right: 10px; }
-        .loading { text-align: center; color: #888; }
+        
+        .id-badge { background-color: #3ECF8E; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; margin-right: 15px; font-size: 0.9em; }
+        .member-name { font-weight: 500; }
+
+        /* === 這裡是轉圈圈動畫的 CSS 設定 === */
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        }
+        .loader {
+            border: 5px solid #f3f3f3; /* 淺灰色的底圈 */
+            border-top: 5px solid #3ECF8E; /* Supabase 綠色的轉動圈 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite; /* 設定旋轉動畫 */
+        }
+
+        /* 定義旋轉的動作：從 0度 轉到 360度 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Project1 會員名單</h1>
+        
         <div id="member-list">
-            <p class="loading">資料讀取中...</p>
+            <div class="loader-container">
+                <div class="loader"></div>
+            </div>
         </div>
     </div>
 
     <script>
         // ==========================================
         // 1. 設定 Supabase 連線資訊
-        // 請將下方引號內的內容換成你在 Settings > API 看到的資訊
+        // 請記得再次填入你的 URL 和 Key
         // ==========================================
         const SUPABASE_URL = 'https://vmfzzffbamiyfqljeeew.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_QSMFMfmF4DLo-wQGOc5vuA_XJxAS-pc';
         
-        // 初始化 Supabase
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==========================================
-        // 2. 抓取資料並顯示的函式
+        // 2. 抓取資料
         // ==========================================
         async function fetchMembers() {
             const listContainer = document.getElementById('member-list');
 
-            // 向 TblMember 資料表抓取所有資料，並依照 MemberID 排序
+            // 為了模擬「讀取中」的感覺，如果你想測試轉圈圈效果，
+            // 可以把下面這行註解拿掉，強制等 1 秒 (正式上線記得刪掉這行)
+            // await new Promise(r => setTimeout(r, 1000));
+
             const { data, error } = await supabase
                 .from('TblMember')
                 .select('*')
@@ -50,25 +78,22 @@
 
             if (error) {
                 console.error('讀取錯誤:', error);
-                listContainer.innerHTML = `<p style="color:red">讀取失敗，請檢查 Console</p>`;
+                listContainer.innerHTML = `<p style="color:red; text-align:center;">讀取失敗，請稍後再試。</p>`;
                 return;
             }
 
-            // 如果沒有資料
             if (!data || data.length === 0) {
-                listContainer.innerHTML = '<p>目前沒有會員資料。</p>';
+                listContainer.innerHTML = '<p style="text-align:center;">目前沒有會員資料。</p>';
                 return;
             }
 
-            // 產生 HTML 列表
+            // 產生 HTML
             let htmlContent = '<ul>';
             data.forEach(member => {
-                // 把數字 ID 轉成兩位數文字 (例如 1 -> "01")
                 const formattedID = member.MemberID.toString().padStart(2, '0');
-                
                 htmlContent += `
                     <li>
-                        <span>
+                        <span class="member-name">
                             <span class="id-badge">${formattedID}</span>
                             ${member.MemberName}
                         </span>
@@ -77,11 +102,10 @@
             });
             htmlContent += '</ul>';
 
-            // 顯示在畫面上
+            // 這行執行下去的瞬間，轉圈圈就會被新的名單蓋掉
             listContainer.innerHTML = htmlContent;
         }
 
-        // 執行函式
         fetchMembers();
     </script>
 </body>
