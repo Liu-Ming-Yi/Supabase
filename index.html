@@ -10,33 +10,29 @@
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
+        /* 列表樣式 */
         ul { list-style: none; padding: 0; margin: 0; }
         li { background: #fff; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; font-size: 18px; align-items: center; }
         li:last-child { border-bottom: none; }
         
+        /* ID 和名字的樣式 */
         .id-badge { background-color: #3ECF8E; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; margin-right: 15px; font-size: 0.9em; }
         .member-name { font-weight: 500; }
 
-        /* === 這裡是轉圈圈動畫的 CSS 設定 === */
-        .loader-container {
-            display: flex;
-            justify-content: center;
-            padding: 40px 0;
+        /* 轉圈圈動畫樣式 */
+        .loader-container { display: flex; justify-content: center; padding: 40px 0; }
+        .loader { 
+            border: 5px solid #f3f3f3; 
+            border-top: 5px solid #3ECF8E; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
         }
-        .loader {
-            border: 5px solid #f3f3f3; /* 淺灰色的底圈 */
-            border-top: 5px solid #3ECF8E; /* Supabase 綠色的轉動圈 */
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite; /* 設定旋轉動畫 */
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 定義旋轉的動作：從 0度 轉到 360度 */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        /* 錯誤訊息樣式 */
+        .error-msg { color: #d93025; text-align: center; padding: 20px; background: #ffe6e6; border-radius: 8px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -53,59 +49,71 @@
 
     <script>
         // ==========================================
-        // 1. 設定 Supabase 連線資訊
-        // 請記得再次填入你的 URL 和 Key
+        // 🟢 請在這裡填入你的 Supabase 資訊 🟢
         // ==========================================
-        const SUPABASE_URL = 'https://vmfzzffbamiyfqljeeew.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_QSMFMfmF4DLo-wQGOc5vuA_XJxAS-pc';
-        
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const MY_SUPABASE_URL = 'https://vmfzzffbamiyfqljeeew.supabase.co'; 
+        const MY_SUPABASE_KEY = 'sb_publishable_QSMFMfmF4DLo-wQGOc5vuA_XJxAS-pc';
+
+        // 這裡我們用 'supabaseClient' 這個名字，避免跟官方工具 'supabase' 衝突
+        const supabaseClient = supabase.createClient(MY_SUPABASE_URL, MY_SUPABASE_KEY);
 
         // ==========================================
-        // 2. 抓取資料
+        // 抓取資料的主程式
         // ==========================================
         async function fetchMembers() {
             const listContainer = document.getElementById('member-list');
 
-            // 為了模擬「讀取中」的感覺，如果你想測試轉圈圈效果，
-            // 可以把下面這行註解拿掉，強制等 1 秒 (正式上線記得刪掉這行)
-            // await new Promise(r => setTimeout(r, 1000));
+            try {
+                // 開始抓取資料
+                const { data, error } = await supabaseClient
+                    .from('TblMember')
+                    .select('*')
+                    .order('MemberID', { ascending: true });
 
-            const { data, error } = await supabase
-                .from('TblMember')
-                .select('*')
-                .order('MemberID', { ascending: true });
+                // 如果 Supabase 回傳錯誤
+                if (error) {
+                    throw error;
+                }
 
-            if (error) {
-                console.error('讀取錯誤:', error);
-                listContainer.innerHTML = `<p style="color:red; text-align:center;">讀取失敗，請稍後再試。</p>`;
-                return;
-            }
+                // 如果資料是空的
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = '<p style="text-align:center;">目前沒有會員資料。</p>';
+                    return;
+                }
 
-            if (!data || data.length === 0) {
-                listContainer.innerHTML = '<p style="text-align:center;">目前沒有會員資料。</p>';
-                return;
-            }
+                // 成功抓到資料！產生 HTML 列表
+                let htmlContent = '<ul>';
+                data.forEach(member => {
+                    // 將 ID 補零 (例如 1 -> 01)
+                    const formattedID = member.MemberID.toString().padStart(2, '0');
+                    
+                    htmlContent += `
+                        <li>
+                            <span class="member-name">
+                                <span class="id-badge">${formattedID}</span>
+                                ${member.MemberName}
+                            </span>
+                        </li>
+                    `;
+                });
+                htmlContent += '</ul>';
 
-            // 產生 HTML
-            let htmlContent = '<ul>';
-            data.forEach(member => {
-                const formattedID = member.MemberID.toString().padStart(2, '0');
-                htmlContent += `
-                    <li>
-                        <span class="member-name">
-                            <span class="id-badge">${formattedID}</span>
-                            ${member.MemberName}
-                        </span>
-                    </li>
+                // 更新畫面 (轉圈圈會消失)
+                listContainer.innerHTML = htmlContent;
+
+            } catch (err) {
+                // 如果發生錯誤，顯示紅字在畫面上
+                console.error(err);
+                listContainer.innerHTML = `
+                    <div class="error-msg">
+                        <strong>讀取失敗</strong><br>
+                        ${err.message || '請檢查 Console 獲取詳細資訊'}
+                    </div>
                 `;
-            });
-            htmlContent += '</ul>';
-
-            // 這行執行下去的瞬間，轉圈圈就會被新的名單蓋掉
-            listContainer.innerHTML = htmlContent;
+            }
         }
 
+        // 執行程式
         fetchMembers();
     </script>
 </body>
