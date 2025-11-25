@@ -1,74 +1,88 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase 專題組員列表</title>
+    <title>Project1 會員列表</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #34495e; }
+        body { font-family: "微軟正黑體", sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
         ul { list-style: none; padding: 0; }
-        li { background-color: #ecf0f1; margin-bottom: 5px; padding: 10px; border-radius: 4px; }
+        li { background: #fff; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; font-size: 18px; }
+        li:last-child { border-bottom: none; }
+        .id-badge { background-color: #3ECF8E; color: white; padding: 2px 8px; border-radius: 5px; font-weight: bold; margin-right: 10px; }
+        .loading { text-align: center; color: #888; }
     </style>
 </head>
 <body>
 
-    <h1>TblMember 組員姓名列表</h1>
-    <p id="loading-status">載入中...</p>
-    <ul id="member-list">
-        </ul>
+    <div class="container">
+        <h1>Project1 會員名單</h1>
+        <div id="member-list">
+            <p class="loading">資料讀取中...</p>
+        </div>
+    </div>
 
     <script>
-        // 🚨 替換成您在 Supabase 儀表板上取得的實際金鑰
-        const SUPABASE_URL = 'https://qfhiycrkhiivpindmddw.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_mNL9sv-beffUtko744-GCw_MIjHTyEr';
+        // ==========================================
+        // 1. 設定 Supabase 連線資訊
+        // 請將下方引號內的內容換成你在 Settings > API 看到的資訊
+        // ==========================================
+        const SUPABASE_URL = 'https://vmfzzffbamiyfqljeeew.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_QSMFMfmF4DLo-wQGOc5vuA_XJxAS-pc';
         
-        // 1. 初始化 Supabase 客戶端
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        const memberList = document.getElementById('member-list');
-        const loadingStatus = document.getElementById('loading-status');
+        // 初始化 Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        /**
-         * 函式：從 Supabase 讀取資料
-         */
+        // ==========================================
+        // 2. 抓取資料並顯示的函式
+        // ==========================================
         async function fetchMembers() {
-            try {
-                // 2. 查詢 TblMember 資料表，只選擇 MemberName 欄位
-                const { data, error } = await supabase
-                    .from('TblMember')
-                    .select('MemberName');
+            const listContainer = document.getElementById('member-list');
 
-                if (error) {
-                    console.error('資料讀取錯誤:', error);
-                    loadingStatus.textContent = `載入失敗: ${error.message}`;
-                    return;
-                }
-                
-                // 3. 成功讀取資料
-                loadingStatus.textContent = `成功讀取 ${data.length} 位會員。`;
+            // 向 TblMember 資料表抓取所有資料，並依照 MemberID 排序
+            const { data, error } = await supabase
+                .from('TblMember')
+                .select('*')
+                .order('MemberID', { ascending: true });
 
-                // 4. 顯示資料到網頁上
-                if (data.length > 0) {
-                    data.forEach(member => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = member.MemberName;
-                        memberList.appendChild(listItem);
-                    });
-                } else {
-                    memberList.innerHTML = '<li>資料表中沒有會員記錄。</li>';
-                }
-
-            } catch (err) {
-                console.error('發生未知錯誤:', err);
-                loadingStatus.textContent = `發生未知錯誤: ${err.message}`;
+            if (error) {
+                console.error('讀取錯誤:', error);
+                listContainer.innerHTML = `<p style="color:red">讀取失敗，請檢查 Console</p>`;
+                return;
             }
+
+            // 如果沒有資料
+            if (!data || data.length === 0) {
+                listContainer.innerHTML = '<p>目前沒有會員資料。</p>';
+                return;
+            }
+
+            // 產生 HTML 列表
+            let htmlContent = '<ul>';
+            data.forEach(member => {
+                // 把數字 ID 轉成兩位數文字 (例如 1 -> "01")
+                const formattedID = member.MemberID.toString().padStart(2, '0');
+                
+                htmlContent += `
+                    <li>
+                        <span>
+                            <span class="id-badge">${formattedID}</span>
+                            ${member.MemberName}
+                        </span>
+                    </li>
+                `;
+            });
+            htmlContent += '</ul>';
+
+            // 顯示在畫面上
+            listContainer.innerHTML = htmlContent;
         }
 
-        // 啟動函式
+        // 執行函式
         fetchMembers();
-
     </script>
 </body>
 </html>
